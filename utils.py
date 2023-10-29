@@ -9,6 +9,9 @@ from tqdm import tqdm
 
 from encoder import get_encoder
 
+from typing import Any
+import torch
+
 
 def download_gpt2_files(model_size, model_dir):
     assert model_size in ["124M", "355M", "774M", "1558M"]
@@ -80,3 +83,14 @@ def load_encoder_hparams_and_params(model_size, models_dir):
     params = load_gpt2_params_from_tf_ckpt(tf_ckpt_path, hparams)
 
     return encoder, hparams, params
+
+
+def cast_to_torch_recursively(obj: Any) -> torch.Tensor:
+    if isinstance(obj, dict):
+        return {k: cast_to_torch_recursively(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [cast_to_torch_recursively(v) for v in obj]
+    elif isinstance(obj, np.ndarray):
+        return torch.from_numpy(obj)
+    else:
+        return obj

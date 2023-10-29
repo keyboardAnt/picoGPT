@@ -1,5 +1,8 @@
 import torch
 import torch.nn.functional as F
+from torch import Tensor
+
+from utils import cast_to_torch_recursively
 
 def gelu(x):
     return 0.5 * x * (1 + torch.tanh(torch.sqrt(2 / torch.pi) * (x + 0.044715 * x**3)))
@@ -47,8 +50,14 @@ def transformer_block(x, mlp, attn, ln_1, ln_2, n_head):
     return x
 
 
-def gpt2(inputs, wte, wpe, blocks, ln_f, n_head):
-    x = wte[inputs] + wpe[torch.arange(inputs.size(0))]
+def gpt2(inputs: Tensor, wte, wpe, blocks, ln_f, n_head):
+    # x = wte[inputs] + wpe[torch.arange(inputs.size(0))]
+    # import pdb; pdb.set_trace()
+    inputs = torch.tensor(inputs, dtype=torch.long)
+    wte = Tensor(wte)
+    wpe = Tensor(wpe)
+    blocks = cast_to_torch_recursively(blocks)
+    x = wte[inputs] + wpe[torch.arange(len(inputs))]
     for block in blocks:
         x = transformer_block(x, **block, n_head=n_head)
     x = layer_norm(x, **ln_f)
